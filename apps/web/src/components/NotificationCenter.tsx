@@ -14,7 +14,7 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotifItem[]>([]);
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">("default");
-  const [seenIds, setSeenIds] = useState<Set<string>>(() => new Set());
+  const [_seenIds, setSeenIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) {
