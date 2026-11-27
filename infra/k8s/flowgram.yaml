@@ -1,0 +1,95 @@
+# Namespace-scoped manifests. Images, secrets and ingress come from your cluster tooling.
+# Worker HPA scales on BullMQ queue depth via an external metric (e.g. KEDA or prometheus-adapter
+# exposing `bullmq_queue_waiting` from the exporter).
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: webhook-ingestor, labels: { app: webhook-ingestor } }
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: webhook-ingestor } }
+  template:
+    metadata: { labels: { app: webhook-ingestor } }
+    spec:
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: app
+          image: flowgram/webhook-ingestor:latest
+          ports: [{ containerPort: 4000 }]
+          envFrom: [{ secretRef: { name: flowgram-secrets } }]
+          resources: { requests: { cpu: 250m, memory: 192Mi }, limits: { cpu: "1", memory: 384Mi } }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+          readinessProbe: { httpGet: { path: /healthz, port: 4000 }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /healthz, port: 4000 }, periodSeconds: 10 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: webhook-ingestor }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: webhook-ingestor }
+  minReplicas: 3
+  maxReplicas: 40
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 55 } }
+  behavior:
+    scaleUp: { stabilizationWindowSeconds: 0, policies: [{ type: Percent, value: 100, periodSeconds: 15 }] }
+    scaleDown: { stabilizationWindowSeconds: 300 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: worker, labels: { app: worker } }
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: worker } }
+  template:
+    metadata: { labels: { app: worker } }
+    spec:
+      terminationGracePeriodSeconds: 45 # lets workers drain and flush counters on SIGTERM
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: app
+          image: flowgram/worker:latest
+          envFrom: [{ secretRef: { name: flowgram-secrets } }]
+          resources: { requests: { cpu: 500m, memory: 384Mi }, limits: { cpu: "2", memory: 768Mi } }
+          securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: [ALL] } }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: worker }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: worker }
+  minReplicas: 3
+  maxReplicas: 60
+  metrics:
+    - type: External
+      external:
+        metric: { name: bullmq_queue_waiting, selector: { matchLabels: { queue: ig-comments } } }
+        target: { type: AverageValue, averageValue: "200" } # ~200 waiting jobs per pod
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: default-deny-ingress }
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: allow-edge-to-ingestor }
+spec:
+  podSelector: { matchLabels: { app: webhook-ingestor } }
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{ namespaceSelector: { matchLabels: { name: ingress } } }]
+      ports: [{ port: 4000 }]
+---
+# The worker accepts no inbound traffic at all (it only dials out to Valkey, PgBouncer, Meta, LLMs).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: worker-egress-only }
+spec:
+  podSelector: { matchLabels: { app: worker } }
+  policyTypes: [Ingress]
+  ingress: []

@@ -1,0 +1,35 @@
+{
+  "name": "@flowgram/worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/main.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0",
+    "@flowgram/ai-engine": "workspace:*",
+    "@flowgram/db": "workspace:*",
+    "@flowgram/ig-client": "workspace:*",
+    "@flowgram/queue": "workspace:*",
+    "@flowgram/security": "workspace:*",
+    "@flowgram/shared": "workspace:*",
+    "bullmq": "6.7.8",
+    "drizzle-orm": "^0.45.4",
+    "ioredis": "^5.4.0",
+    "opossum": "^10.0.0",
+    "pino": "^9.5.0",
+    "stripe": "^23.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/opossum": "^8.1.0",
+    "@types/pg": "^8.11.0",
+    "pg": "^8.13.0",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.12"
+  }
+}

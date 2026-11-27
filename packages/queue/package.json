@@ -1,0 +1,26 @@
+{
+  "name": "@flowgram/queue",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@flowgram/shared": "workspace:*",
+    "bullmq": "6.7.8",
+    "ioredis": "^5.4.0",
+    "opossum": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/opossum": "^8.1.0",
+    "typescript": "7.0.2",
+    "vitest": "^4.1.12"
+  }
+}

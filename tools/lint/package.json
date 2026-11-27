@@ -1,0 +1,14 @@
+{
+  "name": "@flowgram/lint",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ESLint runs here with its own TypeScript 6 because typescript-eslint does not support TS 7.0 yet (everything else compiles with 7.0.2). Remove the pin once typescript-eslint supports TS >= 7.1.",
+  "scripts": { "lint": "cd ../.. && node tools/lint/node_modules/eslint/bin/eslint.js --config tools/lint/eslint.config.mjs --max-warnings=0 ." },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.40.0"
+  }
+}

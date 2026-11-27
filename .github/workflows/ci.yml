@@ -1,0 +1,53 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+
+permissions: { contents: read }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      valkey:
+        image: valkey/valkey:9.2.0
+        ports: ["6379:6379"]
+    env:
+      TEST_DATABASE_APP_URL: postgres://flowgram_app:flowgram_app@localhost:5432/flowgram
+      TEST_DATABASE_OWNER_URL: postgres://flowgram_owner:flowgram_owner@localhost:5432/flowgram
+      DATABASE_DIRECT_URL: postgres://flowgram_owner:flowgram_owner@localhost:5432/flowgram
+      TEST_VALKEY_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Bootstrap database roles
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f infra/docker/postgres/init.sql
+      - run: pnpm build
+      - run: pnpm --filter @flowgram/db migrate
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm audit --audit-level=high
+
+  semgrep:
+    runs-on: ubuntu-latest
+    container: { image: semgrep/semgrep }
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/typescript --config p/owasp-top-ten --config p/secrets --error --metrics=off
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

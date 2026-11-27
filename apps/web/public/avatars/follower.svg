@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Follower portrait">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b9d7e8"/><stop offset="1" stop-color="#7f9fd0"/></linearGradient>
+  <clipPath id="c"><circle cx="48" cy="48" r="48"/></clipPath></defs>
+  <g clip-path="url(#c)">
+    <rect width="96" height="96" fill="url(#bg)"/>
+    <path d="M8 100c3-21 19-29 40-29s37 8 40 29z" fill="#e1306c"/>
+    <path d="M39 67h18v9c0 5-4 7-9 7s-9-2-9-7z" fill="#8d5a3c"/>
+    <ellipse cx="48" cy="45" rx="16" ry="19" fill="#a56a47"/>
+    <path d="M31 44c-3-15 6-25 17-25s20 9 17 25c-2-6-5-9-9-10-5 3-13 4-25 10z" fill="#1c1410"/>
+    <circle cx="42" cy="47" r="1.7" fill="#1c1410"/><circle cx="54" cy="47" r="1.7" fill="#1c1410"/>
+    <path d="M42.5 55.5c3 2.6 8 2.6 11 0" stroke="#5e2f22" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>
