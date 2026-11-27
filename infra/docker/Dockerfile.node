@@ -16,7 +16,7 @@ FROM deps AS build
 ARG APP
 RUN pnpm turbo run build --filter=@flowgram/${APP}...
 # self-contained, production-only tree for the chosen app
-RUN pnpm --filter=@flowgram/${APP} deploy --prod /out
+RUN pnpm --filter=@flowgram/${APP} deploy --legacy --prod /out
 
 FROM node:${NODE_VERSION}-slim AS runtime
 ARG APP
